@@ -91,6 +91,7 @@ namespace UI.ViewModels
                 }
                 else
                 {
+                    _ariaNgWindow.Show();
                     _ariaNgWindow.Activate();
                 }
             });
