@@ -1,0 +1,1 @@
+# LocalAria2Manager
