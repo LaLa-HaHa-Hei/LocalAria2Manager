@@ -149,19 +149,33 @@ namespace BLL.Services
                     await SendShutdownRequestAsync(Guid.NewGuid().ToString(), _aria2Settings!.RpcListenPort);
 
                     // 等待进程退出
-                    if (!_aria2Process!.WaitForExit(5000)) // aria2一般需要3秒去退出
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)); // aria2一般需要3秒去退出
+                    try
+                    {
+                        await _aria2Process.WaitForExitAsync(cts.Token);
+                    }
+                    catch (OperationCanceledException)
                     {
                         Debug.WriteLine("Aria2 did not exit gracefully after 5 seconds. Killing process.");
                         _aria2Process.Kill();
-                        _aria2Process.WaitForExit(2000);
+                        using var killCts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                        await _aria2Process.WaitForExitAsync(killCts.Token);
                     }
                 }
                 catch (Exception)
                 {
                     if (!_aria2Process?.HasExited == true) // Check if it hasn't exited due to the exception or other reasons
                     {
-                        _aria2Process?.Kill();
-                        _aria2Process?.WaitForExit(2000);
+                        try
+                        {
+                            _aria2Process.Kill();
+                            using var killCts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                            await _aria2Process.WaitForExitAsync(killCts.Token);
+                        }
+                        catch (Exception killEx)
+                        {
+                            Debug.WriteLine($"Failed to kill aria2 process: {killEx}");
+                        }
                     }
                 }
             }

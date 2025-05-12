@@ -8,7 +8,7 @@ using UI.Views;
 
 namespace UI.ViewModels
 {
-    public class TaskbarIconViewModel : ObservableObject
+    public partial class TaskbarIconViewModel : ObservableObject
     {
         private readonly IAria2SettingsService _aria2SettingsService;
         private readonly IUiSettingsService _uiSettingsService;
@@ -17,16 +17,6 @@ namespace UI.ViewModels
         private AriaNgWindow? _ariaNgWindow = null;
         private Aria2LogWindow? _aria2LogWindow = null;
         private SettingsWindow? _settingsWindow = null;
-
-        public RelayCommand OpenSettingsWindowCommand { get; }
-        public RelayCommand RestartAria2Command { get; }
-        public RelayCommand StartAria2Command { get; }
-        public RelayCommand StopAria2Command { get; }
-        public RelayCommand OpenAria2LogWindowCommand { get; }
-        public RelayCommand ShowWindowCommand { get; }
-        public RelayCommand HideWindowCommand { get; }
-        public RelayCommand ToggleWindowVisibilityCommand { get; }
-        public RelayCommand ExitApplicationCommand { get; }
 
         public TaskbarIconViewModel(IAria2SettingsService aria2SettingsService, IUiSettingsService uiSettingsService, IWindowBoundsService windowBoundsService, Aria2ProcessService aria2ProcessService)
         {
@@ -45,75 +35,84 @@ namespace UI.ViewModels
                 ExitApplication();
             }
 
-            OpenSettingsWindowCommand = new(() =>
-            {
-                if (_settingsWindow == null)
-                {
-                    _settingsWindow = new(_aria2SettingsService, _uiSettingsService);
-                    _settingsWindow.Closed += (s, e) => _settingsWindow = null;
-                    _settingsWindow.Show();
-                }
-                else
-                {
-                    _settingsWindow.Activate();
-                }
-            });
-            StartAria2Command = new(() => _aria2ProcessService.Start());
-            StopAria2Command = new(async () => await Task.Run(() => _aria2ProcessService.StopAsync()));
-            RestartAria2Command = new(async () =>
-            {
-                await Task.Run(async () =>
-                {
-                    await _aria2ProcessService.StopAsync();
-                    _aria2ProcessService.Start();
-                });
-            });
-            OpenAria2LogWindowCommand = new(() =>
-            {
-                if (_aria2LogWindow == null)
-                {
-                    _aria2LogWindow = new(_aria2ProcessService);
-                    _aria2LogWindow.Closed += (s, e) => _aria2LogWindow = null;
-                    _aria2LogWindow.Show();
-                }
-                else
-                {
-                    _aria2LogWindow.Activate();
-                }
-            });
-            ShowWindowCommand = new(() =>
-            {
-                if (_ariaNgWindow == null)
-                {
-                    _ariaNgWindow = new(_windowBoundsService);
-                    _ariaNgWindow.Closed += (s, e) => _ariaNgWindow = null;
-                    _ariaNgWindow.Show();
-                }
-                else
-                {
-                    _ariaNgWindow.Show();
-                    _ariaNgWindow.Activate();
-                }
-            });
-            HideWindowCommand = new(() => _ariaNgWindow?.Hide());
-            ToggleWindowVisibilityCommand = new(() =>
-            {
-                if (_ariaNgWindow?.IsVisible == true)
-                    HideWindowCommand.Execute(null);
-                else
-                    ShowWindowCommand.Execute(null);
-            });
-            ExitApplicationCommand = new RelayCommand(ExitApplication);
-
-
             UiSettingsDto uiSettingsDto = _uiSettingsService.GetUiSettings();
             if (uiSettingsDto.ShowOnStartup)
             {
-                ShowWindowCommand.Execute(null);
+                ShowAriaNgWindow();
             }
         }
 
-        private void ExitApplication()
+        [RelayCommand]
+        public void OpenSettingsWindow()
+        {
+            if (_settingsWindow == null)
+            {
+                _settingsWindow = new(_aria2SettingsService, _uiSettingsService);
+                _settingsWindow.Closed += (s, e) => _settingsWindow = null;
+                _settingsWindow.Show();
+            }
+            else
+            {
+                _settingsWindow.Activate();
+            }
+        }
+        // Aria2进程
+        [RelayCommand]
+        public void StartAria2() => _aria2ProcessService.Start();
+        [RelayCommand]
+        public async Task StopAria2() => await _aria2ProcessService.StopAsync();
+        [RelayCommand]
+        public async Task RestartAria2()
+        {
+            await _aria2ProcessService.StopAsync();
+            StartAria2();
+        }
+
+        [RelayCommand]
+        public void OpenAria2LogWindow()
+        {
+            if (_aria2LogWindow == null)
+            {
+                _aria2LogWindow = new(_aria2ProcessService);
+                _aria2LogWindow.Closed += (s, e) => _aria2LogWindow = null;
+                _aria2LogWindow.Show();
+            }
+            else
+            {
+                _aria2LogWindow.Activate();
+            }
+        }
+
+        // AriaNgWindow
+        [RelayCommand]
+        public void ShowAriaNgWindow()
+        {
+            if (_ariaNgWindow == null)
+            {
+                _ariaNgWindow = new(_windowBoundsService);
+                _ariaNgWindow.Closed += (s, e) => _ariaNgWindow = null;
+                _ariaNgWindow.Show();
+            }
+            else if (_ariaNgWindow.IsVisible == false)
+                _ariaNgWindow.Show();
+            else
+                _ariaNgWindow.Activate();
+        }
+
+        [RelayCommand]
+        public void HideAriaNgWindow() => _ariaNgWindow?.Hide();
+
+        [RelayCommand]
+        public void ToggleWindowVisibility()
+        {
+            if (_ariaNgWindow?.IsVisible == true)
+                HideAriaNgWindow();
+            else
+                ShowAriaNgWindow();
+        }
+
+        [RelayCommand]
+        public void ExitApplication()
         {
             Application.Current.Shutdown();
         }

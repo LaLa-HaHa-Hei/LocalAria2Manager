@@ -20,8 +20,8 @@
             <MenuItem Header="关闭aria2" Command="{Binding StopAria2Command}" />
             <MenuItem Header="显示aria2输出" Command="{Binding OpenAria2LogWindowCommand}" />
             <Separator />
-            <MenuItem Header="显示窗口" Command="{Binding ShowWindowCommand}" />
-            <MenuItem Header="隐藏窗口" Command="{Binding HideWindowCommand}" />
+            <MenuItem Header="显示窗口" Command="{Binding ShowAriaNgWindowCommand}" />
+            <MenuItem Header="隐藏窗口" Command="{Binding HideAriaNgWindowCommand}" />
             <Separator />
             <MenuItem Header="退出" Command="{Binding ExitApplicationCommand}" />
         </ContextMenu>
